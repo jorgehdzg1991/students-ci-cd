@@ -91,7 +91,7 @@ Resources:
   StudentsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${ProjectName}-${Env}-lambda
+      FunctionName: !Sub ${ProjectName}-${Env}-lambda-microservice
       CodeUri: ../dist
       Handler: lambda.handler
       MemorySize: 128

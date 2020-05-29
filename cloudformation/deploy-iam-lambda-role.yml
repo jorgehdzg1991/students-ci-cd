@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploys the IAM role required by the lambda
+
+Parameters:
+  ProjectName:
+    Type: String
+  Env:
+    Type: String
+  StudentsTableArn:
+    Type: String
+  StudentsDataBucketArn:
+    Type: String
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-${Env}-lambda-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+              - cloudformation.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource:
+                  - !Ref StudentsTableArn
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                  - !Ref StudentsDataBucketArn
+                  - !Sub ${StudentsDataBucketArn}/*
+        - PolicyName: logs
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+            - Effect: Allow
+              Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              Resource: arn:aws:logs:*:*:*
+
+Outputs:
+  LambdaRoleArn:
+    Value: !GetAtt LambdaRole.Arn
+    Description: ARN of the LambdaRole

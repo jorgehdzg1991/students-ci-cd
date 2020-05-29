@@ -1,0 +1,192 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: students-ci-cd CodePipeline
+
+Parameters:
+  ProjectName:
+    Type: String
+  Env:
+    Type: String
+  S3Bucket:
+    Type: String
+  RoleArn:
+    Type: String
+  RepoOwner:
+    Type: String
+  RepoName:
+    Type: String
+  BranchName:
+    Type: String
+  GithubOAuthToken:
+    Type: String
+
+Resources:
+  CodeBuildLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${S3Bucket}.s3.amazonaws.com/codebuild-project.yml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        Env: !Ref Env
+        BuildStep: build
+        BuildSpecFile: buildspecs/build.yml
+        Role: !Ref RoleArn
+        S3Bucket: !Ref S3Bucket
+
+  CodeBuildTest:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${S3Bucket}.s3.amazonaws.com/codebuild-project.yml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        Env: !Ref Env
+        BuildStep: test
+        BuildSpecFile: buildspecs/test.yml
+        Role: !Ref RoleArn
+
+  CodeBuildLint:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${S3Bucket}.s3.amazonaws.com/codebuild-project.yml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        Env: !Ref Env
+        BuildStep: lint
+        BuildSpecFile: buildspecs/lint.yml
+        Role: !Ref RoleArn
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub ${ProjectName}-${Env}-pipeline
+      ArtifactStore:
+        Type: S3
+        Location: !Ref S3Bucket
+      RoleArn: !Ref RoleArn
+      Stages:
+        # source stage
+        - Name: Source
+          Actions:
+            # pull code from github
+            - Name: Source
+              InputArtifacts: []
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: '1'
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: source-out
+              Configuration:
+                Owner: !Ref RepoOwner
+                Repo: !Ref RepoName
+                Branch: !Ref BranchName
+                OAuthToken: !Ref GithubOAuthToken
+                PollForSourceChanges: false
+              RunOrder: 1
+
+        # build stage
+        - Name: Build
+          Actions:
+            # test
+            - Name: Test
+              InputArtifacts:
+                - Name: source-out
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: test-out
+              Configuration:
+                ProjectName: !GetAtt CodeBuildTest.Outputs.BuildProject
+              RunOrder: 1
+            # lint
+            - Name: Lint
+              InputArtifacts:
+                - Name: source-out
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: lint-out
+              Configuration:
+                ProjectName: !GetAtt CodeBuildLint.Outputs.BuildProject
+              RunOrder: 1
+            # build
+            - Name: LambdaBuild
+              InputArtifacts:
+                - Name: source-out
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: build-out
+              Configuration:
+                ProjectName: !GetAtt CodeBuildLambda.Outputs.BuildProject
+              RunOrder: 2
+
+        # deploy stage
+        - Name: Deploy
+          Actions:
+            # replace ChangeSet
+            - Name: ReplaceChangeSet
+              InputArtifacts:
+                - Name: build-out
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: '1'
+                Provider: CloudFormation
+              Configuration:
+                ChangeSetName: Deploy
+                ActionMode: CHANGE_SET_REPLACE
+                StackName: !Sub ${ProjectName}-${Env}-deployment
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                TemplatePath: build-out::deploy-master-packaged.yml
+                RoleArn: !Ref RoleArn
+                ParameterOverrides: !Sub 
+                  - |
+                    {
+                      "ProjectName": "${PROJECT_NAME}",
+                      "Env": "${ENV}",
+                      "LambdaLocationBucket": "${S3_BUCKET}",
+                      "ArtifactsPath": { "Fn::GetParam" : [ "build-out", "build.json", "ArtifactsLocation" ] }
+                    }
+                  - PROJECT_NAME: !Ref ProjectName
+                    ENV: !Ref Env
+                    S3_BUCKET: !Ref S3Bucket
+                RoleArn: !Ref RoleArn
+              RunOrder: 1
+            # execute change set
+            - Name: ExecuteChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: '1'
+                Provider: CloudFormation
+              Configuration:
+                ChangeSetName: Deploy
+                ActionMode: CHANGE_SET_EXECUTE
+                StackName: !Sub ${ProjectName}-${Env}-deployment
+              RoleArn: !Ref RoleArn
+              RunOrder: 2
+
+  WebhookPipeline:
+    Type: AWS::CodePipeline::Webhook
+    Properties:
+      Name: !Sub ${ProjectName}-${Env}-webhook
+      AuthenticationConfiguration:
+        SecretToken: !Ref GithubOAuthToken
+      Filters:
+        - JsonPath: "$.ref"
+          MatchEquals: !Sub refs/heads/${BranchName}
+      Authentication: GITHUB_HMAC
+      TargetPipeline: !Ref Pipeline
+      TargetAction: Source
+      RegisterWithThirdParty: true
+      TargetPipelineVersion: !GetAtt Pipeline.Version

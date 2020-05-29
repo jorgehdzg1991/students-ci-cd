@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploys DynamoDB tables required by the application
+
+Parameters:
+  ProjectName:
+    Type: String
+  Env:
+    Type: String
+
+Resources:
+  StudentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${ProjectName}-${Env}-students
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+Outputs:
+  StudentsTableArn:
+    Value: !GetAtt StudentsTable.Arn
+    Description: ARN of the students table
+  StudentsTableName:
+    Value: !Ref StudentsTable
+    Description: Name of the students table

@@ -38,7 +38,7 @@ Resources:
         ProjectName: !Ref ProjectName
         Env: !Ref Env
         StudentsTableArn: !GetAtt DeployDynamoDB.Outputs.StudentsTableArn
-        TemplatesBucketArn: !GetAtt StudentsDataBucket.Arn
+        StudentsDataBucketArn: !GetAtt StudentsDataBucket.Arn
   
   ApiGatewayApi:
     Type: AWS::Serverless::Api

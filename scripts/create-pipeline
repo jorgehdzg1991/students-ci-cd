@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# deployment variables
+AWS_REGION=us-east-1
+PROJECT_NAME=students-ci-cd
+ENV=dev
+S3_BUCKET="${PROJECT_NAME}-artifacts"
+TEMPLATE_URL="https://${S3_BUCKET}.s3.amazonaws.com/codepipeline.yml"
+STACK_NAME="${PROJECT_NAME}-${ENV}-pipeline"
+PIPELINE_ROLE_ARN=arn:aws:iam::249541045209:role/my-codepipeline-role
+REPO_OWNER=jorgehdzg1991
+REPO_NAME=students-ci-cd
+BRANCH_NAME=master
+GITHUB_OAUTH_TOKEN=4f0f947bff306e959c577c95cedc200963ec54ad
+
+# sync templates with S3
+aws s3 cp ./cloudformation/codepipeline.yml s3://${S3_BUCKET}/codepipeline.yml
+aws s3 cp ./cloudformation/codebuild-project.yml s3://${S3_BUCKET}/codebuild-project.yml
+
+# validate template format
+aws cloudformation validate-template --template-url $TEMPLATE_URL
+
+# create the pipeline's CFN stack
+aws cloudformation create-stack \
+  --stack-name $STACK_NAME \
+  --template-url $TEMPLATE_URL \
+  --parameters \
+    ParameterKey=ProjectName,ParameterValue=$PROJECT_NAME \
+    ParameterKey=Env,ParameterValue=$ENV \
+    ParameterKey=S3Bucket,ParameterValue=$S3_BUCKET \
+    ParameterKey=RoleArn,ParameterValue=$PIPELINE_ROLE_ARN \
+    ParameterKey=RepoOwner,ParameterValue=$REPO_OWNER \
+    ParameterKey=RepoName,ParameterValue=$REPO_NAME \
+    ParameterKey=BranchName,ParameterValue=$BRANCH_NAME \
+    ParameterKey=GithubOAuthToken,ParameterValue=$GITHUB_OAUTH_TOKEN \
+  --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM

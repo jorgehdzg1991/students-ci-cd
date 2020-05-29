@@ -8,4 +8,4 @@ phases:
       - yarn install
   build:
     commands:
-      - yarn coverage
+      - yarn test

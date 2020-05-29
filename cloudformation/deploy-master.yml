@@ -93,7 +93,7 @@ Resources:
     Properties:
       FunctionName: !Sub ${ProjectName}-${Env}-lambda
       CodeUri: ../dist
-      Handler: serverless.handler
+      Handler: lambda.handler
       MemorySize: 128
       Role: !GetAtt DeployIamLambdaRole.Outputs.LambdaRoleArn
       Runtime: nodejs12.x

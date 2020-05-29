@@ -1,0 +1,44 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 12
+    commands:
+      # install packages for build
+      - yarn install
+  build:
+    commands:
+      # build lambda
+      - yarn build
+      - yarn install --production --modules-folder ./dist/node_modules
+
+      # package lambda
+      - >
+        aws cloudformation package
+        --template cloudformation/deploy-master.yml
+        --s3-bucket $S3_BUCKET
+        --s3-prefix $S3_PREFIX
+        --output-template cloudformation/deploy-master-packaged.yml
+        --region $AWS_REGION
+
+      # sync deployment templates
+      - >
+        aws s3 sync
+        cloudformation/
+        s3://$S3_BUCKET/$S3_PREFIX/
+        --exclude "*"
+        --include "deploy-*.yml"
+      - >
+        aws s3 cp
+        cloudformation/deploy-master-packaged.yml
+        s3://${S3_BUCKET}/${S3_PREFIX}/deploy-master-packaged.yml
+      
+      # output ArtifactsLocation in a build.json file
+      - printf '{"ArtifactsLocation":"%s"}' ${S3_PREFIX} > build.json
+
+artifacts:
+  files:
+    - cloudformation/deploy-master-packaged.yml
+    - build.json
+  discard-paths: yes

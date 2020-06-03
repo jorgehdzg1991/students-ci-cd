@@ -32,7 +32,7 @@ export default class Student extends DBManager {
   updatedAt;
 
   constructor(id, firstName, lastName, major, semester, createdAt, updatedAt) {
-    super(process.env.STUDENT_TABLE_NAME, studentSchema);
+    super(process.env.STUDENTS_TABLE, studentSchema);
 
     this.id = id;
     this.firstName = firstName;

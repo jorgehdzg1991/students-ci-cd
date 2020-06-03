@@ -9,7 +9,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "nodemon --exec babel-node -r ./node_modules/dotenv/config src/index.js",
-    "build": "yarn install && babel src -d dist",
+    "build": "babel src -d dist",
     "lint": "eslint --ext .js src test",
     "lint:fix": "eslint --ext .js src test --fix",
     "test": "mocha -r @babel/register test/setup/bootstrapper.js 'test/**/*.spec.js' --timeout 3000",
@@ -37,6 +37,7 @@
     "all": true
   },
   "dependencies": {
+    "@babel/runtime": "^7.8.4",
     "aws-sdk": "^2.615.0",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
@@ -70,7 +71,6 @@
     "@babel/plugin-transform-runtime": "^7.8.3",
     "@babel/preset-env": "^7.8.4",
     "@babel/register": "^7.8.3",
-    "@babel/runtime": "^7.8.4",
     "apidoc": "^0.20.0",
     "babel-eslint": "^10.0.3",
     "core-js": "^3.6.4",

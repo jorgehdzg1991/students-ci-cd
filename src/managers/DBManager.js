@@ -25,13 +25,13 @@ export default class DBManager {
   }
 
   async get() {
-    const posts = await this.db.scan().exec();
-    return posts.map(p => this.fromDBResponse(p));
+    const entity = await this.db.scan().exec();
+    return entity.map(p => this.fromDBResponse(p));
   }
 
   async getByKey() {
-    const post = await this.db.get(this.getKey());
-    return post ? this.fromDBResponse(post) : null;
+    const entity = await this.db.get(this.getKey());
+    return entity ? this.fromDBResponse(entity) : null;
   }
 
   create() {

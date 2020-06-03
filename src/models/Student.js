@@ -15,6 +15,8 @@ const studentSchema = {
 };
 
 export default class Student extends DBManager {
+  static updatableAttributes = ['firstName', 'lastName', 'major', 'semester'];
+
   id;
 
   firstName;

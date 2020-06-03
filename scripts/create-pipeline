@@ -11,7 +11,7 @@ PIPELINE_ROLE_ARN=arn:aws:iam::249541045209:role/my-codepipeline-role
 REPO_OWNER=jorgehdzg1991
 REPO_NAME=students-ci-cd
 BRANCH_NAME=master
-GITHUB_OAUTH_TOKEN=0506d4f175594f39caad758f643d6bac72b63fa3
+GITHUB_OAUTH_TOKEN=
 
 # sync templates with S3
 aws s3 cp ./cloudformation/codepipeline.yml s3://${S3_BUCKET}/codepipeline.yml

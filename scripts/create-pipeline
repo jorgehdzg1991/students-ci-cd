@@ -10,7 +10,7 @@ STACK_NAME="${PROJECT_NAME}-${ENV}-pipeline"
 PIPELINE_ROLE_ARN=arn:aws:iam::249541045209:role/students-ci-cd-codepipeline-role
 REPO_OWNER=jorgehdzg1991
 REPO_NAME=students-ci-cd
-BRANCH_NAME=master
+BRANCH_NAME="feature/workshop_init"
 GITHUB_OAUTH_TOKEN=
 
 # sync templates with S3

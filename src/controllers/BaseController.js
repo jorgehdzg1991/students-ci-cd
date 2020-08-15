@@ -1,5 +1,5 @@
 import { INTERNAL_SERVER_ERROR } from 'http-status-codes';
-import { respond } from '../utils/response';
+import { sendResponse } from '../utils/response';
 
 export default class BaseController {
   static basePath = '';
@@ -20,9 +20,15 @@ export default class BaseController {
     throw new Error('Method not implemented. Please use a proper sub-class.');
   }
 
-  static handleUnknownError(res, e) {
+  // eslint-disable-next-line class-methods-use-this
+  respond(res, status, data) {
+    sendResponse(res, status, data);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  handleUnknownError(res, e) {
     console.error(e);
-    respond(res, INTERNAL_SERVER_ERROR, {
+    sendResponse(res, INTERNAL_SERVER_ERROR, {
       message: e.message
     });
   }

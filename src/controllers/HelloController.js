@@ -1,5 +1,4 @@
 import { OK } from 'http-status-codes';
-import { respond } from '../utils/response';
 import BaseController from './BaseController';
 
 export default class HelloController extends BaseController {
@@ -10,10 +9,10 @@ export default class HelloController extends BaseController {
   }
 
   initialize() {
-    this.app.get(HelloController.basePath, HelloController.sayHello);
+    this.app.get(HelloController.basePath, this.sayHello.bind(this));
   }
 
-  static sayHello(req, res) {
-    respond(res, OK, { hello: 'world' });
+  sayHello(req, res) {
+    this.respond(res, OK, { hello: 'world' });
   }
 }

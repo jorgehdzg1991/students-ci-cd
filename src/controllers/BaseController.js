@@ -1,7 +1,7 @@
 import { INTERNAL_SERVER_ERROR } from 'http-status-codes';
 import { respond } from '../utils/response';
 
-export default class {
+export default class BaseController {
   static basePath = '';
 
   app;

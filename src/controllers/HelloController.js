@@ -1,6 +1,6 @@
 import { OK } from 'http-status-codes';
 import { respond } from '../utils/response';
-import Controller from '../models/Controller';
+import Controller from './BaseController';
 
 export default class HelloController extends Controller {
   static basePath = '/api/hello';

@@ -1,5 +1,5 @@
 import { OK, NOT_FOUND } from 'http-status-codes';
-import Controller from '../models/Controller';
+import Controller from './BaseController';
 import Student from '../models/Student';
 import { respond } from '../utils/response';
 

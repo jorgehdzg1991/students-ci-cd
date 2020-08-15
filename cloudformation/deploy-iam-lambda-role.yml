@@ -6,10 +6,6 @@ Parameters:
     Type: String
   Env:
     Type: String
-  StudentsTableArn:
-    Type: String
-  StudentsDataBucketArn:
-    Type: String
 
 Resources:
   LambdaRole:
@@ -28,21 +24,6 @@ Resources:
       Path: "/"
       Policies:
         - PolicyName: root
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dynamodb:*
-                Resource:
-                  - !Ref StudentsTableArn
-              - Effect: Allow
-                Action:
-                  - s3:*
-                Resource:
-                  - !Ref StudentsDataBucketArn
-                  - !Sub ${StudentsDataBucketArn}/*
-        - PolicyName: logs
           PolicyDocument:
             Version: 2012-10-17
             Statement:
